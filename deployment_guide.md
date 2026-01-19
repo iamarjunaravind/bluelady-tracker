@@ -58,3 +58,5 @@ Now that the backend is on the internet, tell the mobile app to use it.
     - Run `npx expo prebuild --platform android --clean`
     - Run `cd mobile/android && gradlew assembleRelease`
 4.  Install the new APK. Now it works consistently anywhere!
+
+**Final API URL:** `https://bluelady-tracker-production.up.railway.app/api`
