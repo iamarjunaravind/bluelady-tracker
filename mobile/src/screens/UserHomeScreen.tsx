@@ -118,6 +118,11 @@ export default function UserHomeScreen() {
           onPress={() => navigation.navigate('MyAttendance')}
         />
         <DashboardCard 
+          title="Routes" 
+          icon="map-marker-path" 
+          onPress={() => navigation.navigate('Routes')}
+        />
+        <DashboardCard 
           title="My Regularization" 
           icon="calendar-edit" 
           onPress={() => Alert.alert('Coming Soon', 'Regularization is under development.')}

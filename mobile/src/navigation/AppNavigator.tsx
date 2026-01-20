@@ -18,6 +18,11 @@ import PunchPhotoScreen from '../screens/PunchPhotoScreen';
 import HolidayCalendarScreen from '../screens/HolidayCalendarScreen';
 import MyAttendanceScreen from '../screens/MyAttendanceScreen';
 import StaffAttendanceScreen from '../screens/StaffAttendanceScreen';
+import RoutesScreen from '../screens/RoutesScreen';
+import StoreListScreen from '../screens/StoreListScreen';
+import StoreOnboardingScreen from '../screens/StoreOnboardingScreen';
+import StoreVisitScreen from '../screens/StoreVisitScreen';
+import ManagerApprovalScreen from '../screens/ManagerApprovalScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,6 +42,11 @@ export default function AppNavigator() {
       <Stack.Screen name="PunchPhoto" component={PunchPhotoScreen} options={{ headerShown: true, title: 'Capture Photo' }} />
       <Stack.Screen name="HolidayCalendar" component={HolidayCalendarScreen} options={{ headerShown: true, title: 'Holiday Calendar' }} />
       <Stack.Screen name="MyAttendance" component={MyAttendanceScreen} options={{ headerShown: true, title: 'My Attendance' }} />
+      <Stack.Screen name="Routes" component={RoutesScreen} options={{ headerShown: true, title: 'Routes' }} />
+      <Stack.Screen name="StoreList" component={StoreListScreen} options={{ headerShown: true, title: 'Stores' }} />
+      <Stack.Screen name="StoreOnboarding" component={StoreOnboardingScreen} options={{ headerShown: true, title: 'Add New Store' }} />
+      <Stack.Screen name="StoreVisit" component={StoreVisitScreen} options={{ headerShown: true, title: 'Store Visit' }} />
+      <Stack.Screen name="ManagerApproval" component={ManagerApprovalScreen} options={{ headerShown: true, title: 'Approvals' }} />
     </>
   );
 

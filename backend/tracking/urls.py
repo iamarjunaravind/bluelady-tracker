@@ -5,7 +5,14 @@ from .views import (
     AllAgentsLatestLocationView,
     AttendanceCreateView,
     AttendanceListView,
-    StaffAttendanceView
+    StaffAttendanceView,
+    RouteListView,
+    StoreListView,
+    StoreVisitCreateView,
+    ManagerStoreVisitListView,
+    ApproveStoreView,
+    ApproveStoreVisitView,
+    PendingApprovalsView
 )
 
 urlpatterns = [
@@ -15,4 +22,12 @@ urlpatterns = [
     path('punch/', AttendanceCreateView.as_view(), name='attendance-punch'),
     path('my-attendance/', AttendanceListView.as_view(), name='my-attendance'),
     path('staff-attendance/', StaffAttendanceView.as_view(), name='staff-attendance'),
+    # New endpoints
+    path('routes/', RouteListView.as_view(), name='route-list'),
+    path('stores/', StoreListView.as_view(), name='store-list'),
+    path('store-visit/', StoreVisitCreateView.as_view(), name='store-visit-create'),
+    path('manager/visits/', ManagerStoreVisitListView.as_view(), name='manager-visit-list'),
+    path('manager/approve/store/<int:pk>/', ApproveStoreView.as_view(), name='approve-store'),
+    path('manager/approve/visit/<int:pk>/', ApproveStoreVisitView.as_view(), name='approve-visit'),
+    path('manager/pending/', PendingApprovalsView.as_view(), name='pending-approvals'),
 ]

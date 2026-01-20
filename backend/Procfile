@@ -1,1 +1,1 @@
-web: python manage.py migrate && python create_superuser.py && gunicorn employee_tracker.wsgi --log-file -
+web: python manage.py migrate && python manage.py populate_dummy_data && python create_superuser.py && gunicorn employee_tracker.wsgi --log-file -

@@ -14,6 +14,7 @@ interface LocationData {
 
 export default function EmployeeMapScreen() {
   const [location, setLocation] = useState<LocationData | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const route = useRoute<any>();
   const { employeeId, employeeName } = route.params;
   const mapRef = useRef<MapView>(null);
@@ -42,6 +43,7 @@ export default function EmployeeMapScreen() {
 
     } catch (error) {
       console.log('Error fetching location:', error);
+      setErrorMsg("Failed to load location.");
     }
   };
 
@@ -67,8 +69,14 @@ export default function EmployeeMapScreen() {
         </MapView>
       ) : (
         <View style={styles.loading}>
-          <ActivityIndicator size="large" color="#000" />
-          <Text style={{ marginTop: 10 }}>Fetching location...</Text>
+            {errorMsg ? (
+                <Text style={{ color: 'red' }}>{errorMsg}</Text>
+            ) : (
+                <>
+                    <ActivityIndicator size="large" color="#000" />
+                    <Text style={{ marginTop: 10 }}>Fetching location...</Text>
+                </>
+            )}
         </View>
       )}
       

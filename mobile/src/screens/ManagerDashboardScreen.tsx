@@ -79,6 +79,18 @@ export default function ManagerDashboardScreen() {
           onPress={() => navigation.navigate('HolidayCalendar')}
         />
         <DashboardCard 
+          title="Routes" 
+          icon="map-marker-path" 
+          onPress={() => navigation.navigate('Routes')}
+          color="#FF9800"
+        />
+        <DashboardCard 
+          title="Approvals" 
+          icon="check-decagram" 
+          onPress={() => navigation.navigate('ManagerApproval')}
+          color="#E91E63"
+        />
+        <DashboardCard 
           title="Offboarding" 
           icon="account-off" 
           onPress={() => Alert.alert('Coming Soon', 'Offboarding is under development.')}

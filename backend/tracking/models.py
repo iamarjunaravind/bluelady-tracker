@@ -17,5 +17,47 @@ class Attendance(models.Model):
     photo = models.ImageField(upload_to='attendance_photos/')
     timestamp = models.DateTimeField(auto_now_add=True)
 
+
     def __str__(self):
         return f"{self.user.username} - {self.timestamp.date()}"
+
+class Route(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Store(models.Model):
+    CAPACITY_CHOICES = [
+        ('small', 'Small'),
+        ('medium', 'Medium'),
+        ('large', 'Large'),
+    ]
+
+    route = models.ForeignKey(Route, on_delete=models.SET_NULL, null=True, blank=True, related_name='stores')
+    name = models.CharField(max_length=200)
+    manager_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=20)
+    address = models.TextField()
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    capacity_size = models.CharField(max_length=10, choices=CAPACITY_CHOICES)
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class StoreVisit(models.Model):
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='visits')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_visits')
+    photo = models.ImageField(upload_to='store_visit_photos/')
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    is_approved = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.store.name} - {self.timestamp}"

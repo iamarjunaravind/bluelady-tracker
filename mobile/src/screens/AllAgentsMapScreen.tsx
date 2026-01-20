@@ -36,8 +36,14 @@ export default function AllAgentsMapScreen() {
       return;
     }
 
-    const location = await Location.getCurrentPositionAsync({});
-    setManagerLocation(location);
+    try {
+      const location = await Location.getCurrentPositionAsync({});
+      setManagerLocation(location);
+    } catch (e) {
+       console.log("Error getting manager location", e);
+    } finally {
+       // We don't stop loading here because we wait for agents, but good to handle error
+    }
     
     // Watch location for real-time manager updates
     await Location.watchPositionAsync(
@@ -56,9 +62,10 @@ export default function AllAgentsMapScreen() {
     try {
       const response = await api.get('/tracking/all/');
       setAgents(response.data);
-      setLoading(false);
     } catch (error) {
       console.log('Error fetching all agents:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
