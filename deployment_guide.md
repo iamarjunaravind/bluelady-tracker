@@ -20,9 +20,10 @@ Railway pulls your code from GitHub. You need to upload your project there.
 1.  Go to [Railway.app](https://railway.app/) and Login.
 2.  Click **New Project** > **Deploy from GitHub repo**.
 3.  Select `bluelady-tracker`.
-4.  Click **Deploy Now**.
-5.  **Wait**: Railway will install dependencies and start the server.
-6.  **Domain**: Go to **Settings** > **Domains** > **Generate Domain**.
+4.  **Important**: Go to **Settings** > **Build** > **Root Directory** and set it to `backend`.
+5.  Click **Deploy Now** (or it might auto-deploy).
+6.  **Wait**: Railway will install dependencies and start the server.
+7.  **Domain**: Go to **Settings** > **Domains** > **Generate Domain**.
     - Copy this URL (e.g., `https://bluelady-production.up.railway.app`).
 
 ## Phase 3: Setup Superuser (Cloud DB)
@@ -59,4 +60,4 @@ Now that the backend is on the internet, tell the mobile app to use it.
     - Run `cd mobile/android && gradlew assembleRelease`
 4.  Install the new APK. Now it works consistently anywhere!
 
-**Final API URL:** `https://bluelady-tracker-production.up.railway.app/api`
+**Final API URL:** `https://bluelady-tracker-production-e9eb.up.railway.app/api`

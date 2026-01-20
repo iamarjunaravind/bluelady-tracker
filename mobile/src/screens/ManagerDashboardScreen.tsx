@@ -1,65 +1,43 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import DashboardCard from '../components/DashboardCard';
+import * as Location from 'expo-location';
 
-interface User {
-  id: number;
-  username: string;
-  first_name: string;
-  last_name: string;
-}
+const LOCATION_TASK_NAME = 'background-location-task';
 
 export default function ManagerDashboardScreen() {
-  const [employees, setEmployees] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { signOut, username } = useAuth();
   const navigation = useNavigation<any>();
-  const { signOut } = useAuth();
+  const [isTracking, setIsTracking] = useState(false);
 
-  const fetchEmployees = async () => {
-    try {
-      const response = await api.get('/users/list/');
-      setEmployees(response.data);
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to fetch employees');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+  const checkTaskStatus = async () => {
+    const hasStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+    setIsTracking(hasStarted);
   };
 
   useFocusEffect(
     useCallback(() => {
-      fetchEmployees();
+      checkTaskStatus();
     }, [])
   );
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchEmployees();
+  const toggleTracking = async () => {
+    const nextStatus = isTracking ? 'Check Out' : 'Check In';
+    Alert.alert(
+      'Punch Confirmation',
+      `Do you want to ${nextStatus}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Yes', 
+          onPress: () => navigation.navigate('PunchPhoto', { isCheckIn: !isTracking })
+        },
+      ]
+    );
   };
-
-  const renderItem = ({ item }: { item: User }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('EmployeeMap', { employeeId: item.id, employeeName: item.username })}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{item.first_name?.[0]?.toUpperCase() || item.username[0].toUpperCase()}</Text>
-        </View>
-        <View style={styles.info}>
-          <Text style={styles.name}>{item.first_name} {item.last_name}</Text>
-          <Text style={styles.username}>@{item.username}</Text>
-        </View>
-        <Text style={styles.arrow}>›</Text>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -70,23 +48,42 @@ export default function ManagerDashboardScreen() {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={employees}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={!loading ? <Text style={styles.empty}>No employees found</Text> : null}
-      />
+      <View style={styles.welcomeBanner}>
+        <Text style={styles.welcomeText}>Welcome,</Text>
+        <Text style={styles.usernameText}>{username || 'Manager'}</Text>
+      </View>
 
-      {loading && <ActivityIndicator style={styles.loader} size="large" color="#007AFF" />}
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('AddEmployee')}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <View style={styles.grid}>
+        <DashboardCard 
+          title="Punch" 
+          subtitle={isTracking ? '(Checked In)' : '(Checked Out)'}
+          icon="map-marker-radius" 
+          onPress={toggleTracking}
+          color={isTracking ? '#4CAF50' : '#007AFF'}
+        />
+        <DashboardCard 
+          title="Agents" 
+          subtitle="(Tracking)"
+          icon="account-group" 
+          onPress={() => navigation.navigate('AgentsSection')}
+          color="#673AB7"
+        />
+        <DashboardCard 
+          title="My Attendance" 
+          icon="calendar-check" 
+          onPress={() => navigation.navigate('MyAttendance')}
+        />
+        <DashboardCard 
+          title="Holiday Calendar" 
+          icon="weather-sunny" 
+          onPress={() => navigation.navigate('HolidayCalendar')}
+        />
+        <DashboardCard 
+          title="Offboarding" 
+          icon="account-off" 
+          onPress={() => Alert.alert('Coming Soon', 'Offboarding is under development.')}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -94,104 +91,46 @@ export default function ManagerDashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
-    padding: 24,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: '#333',
   },
   logout: {
     color: '#FF3B30',
     fontSize: 16,
-    fontWeight: '600',
   },
-  list: {
-    padding: 16,
+  welcomeBanner: {
+    backgroundColor: '#0055D4',
+    margin: 16,
+    padding: 24,
+    borderRadius: 8,
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  avatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4F46E5',
-  },
-  info: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  username: {
-    fontSize: 14,
-    color: '#666',
-  },
-  arrow: {
-    fontSize: 24,
-    color: '#ccc',
-  },
-  empty: {
-    textAlign: 'center',
-    marginTop: 40,
-    color: '#999',
-    fontSize: 16,
-  },
-  loader: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginLeft: -18,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabText: {
-    fontSize: 32,
+  welcomeText: {
     color: '#fff',
-    lineHeight: 34,
+    fontSize: 18,
+    opacity: 0.9,
+  },
+  usernameText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 10,
+    justifyContent: 'flex-start',
   },
 });

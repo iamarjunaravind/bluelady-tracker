@@ -28,15 +28,17 @@ export default function EmployeeMapScreen() {
     try {
       const response = await api.get(`/tracking/${employeeId}/latest/`);
       const { latitude, longitude, timestamp } = response.data;
-      setLocation({ latitude, longitude, timestamp });
-      
-      // Animate map to new location
-      mapRef.current?.animateToRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      if (latitude && longitude) {
+        setLocation({ latitude, longitude, timestamp });
+        
+        // Animate map to new location
+        mapRef.current?.animateToRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }, 1000);
+      }
 
     } catch (error) {
       console.log('Error fetching location:', error);

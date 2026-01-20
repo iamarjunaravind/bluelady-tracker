@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
@@ -6,6 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -39,9 +40,12 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
   }
 });
 
+import DashboardCard from '../components/DashboardCard';
+
 export default function UserHomeScreen() {
   const [isTracking, setIsTracking] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, username } = useAuth();
+  const navigation = useNavigation<any>();
   const [permissionStatus, setPermissionStatus] = useState<string>('undetermined');
 
   useEffect(() => {
@@ -51,12 +55,13 @@ export default function UserHomeScreen() {
 
   const checkPermissions = async () => {
     const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
+    let finalStatus = foregroundStatus;
     if (foregroundStatus === 'granted') {
       const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-      setPermissionStatus(backgroundStatus);
-    } else {
-      setPermissionStatus(foregroundStatus);
+      finalStatus = backgroundStatus;
     }
+    setPermissionStatus(finalStatus);
+    return finalStatus;
   };
 
   const checkTaskStatus = async () => {
@@ -65,60 +70,80 @@ export default function UserHomeScreen() {
   };
 
   const toggleTracking = async () => {
-    if (isTracking) {
-      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
-      setIsTracking(false);
-      Alert.alert('Checked Out', 'Location tracking stopped.');
-    } else {
-      if (permissionStatus !== 'granted') {
-          await checkPermissions();
-          if (permissionStatus !== 'granted') {
-            Alert.alert('Permission Required', 'Background location is required to check in.');
-            return;
-          }
-      }
-
-      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.High,
-        timeInterval: 10000, // 10 seconds
-        distanceInterval: 10, // 10 meters
-        foregroundService: {
-          notificationTitle: "You are checked in",
-          notificationBody: "Tracking your location for attendance",
+    const nextStatus = isTracking ? 'Check Out' : 'Check In';
+    Alert.alert(
+      'Punch Confirmation',
+      `Do you want to ${nextStatus}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Yes', 
+          onPress: () => navigation.navigate('PunchPhoto', { isCheckIn: !isTracking })
         },
-      });
-      setIsTracking(true);
-      Alert.alert('Checked In', 'Location tracking started.');
-    }
+      ]
+    );
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      checkTaskStatus();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>BlueLady</Text>
+        <Text style={styles.logo}>Dashboard</Text>
         <TouchableOpacity onPress={signOut}>
           <Text style={styles.logout}>Logout</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <View style={[styles.statusCard, isTracking ? styles.online : styles.offline]}>
-            <Text style={styles.statusTitle}>Current Status</Text>
-            <Text style={styles.statusText}>{isTracking ? 'ON DUTY' : 'OFF DUTY'}</Text>
-        </View>
+      <View style={styles.welcomeBanner}>
+        <Text style={styles.welcomeText}>Welcome,</Text>
+        <Text style={styles.usernameText}>{username || 'User'}</Text>
+      </View>
 
-        <TouchableOpacity 
-          style={[styles.button, isTracking ? styles.checkOut : styles.checkIn]} 
+      <View style={styles.grid}>
+        <DashboardCard 
+          title="Punch" 
+          subtitle={isTracking ? '(Checked In)' : '(Checked Out)'}
+          icon="map-marker-radius" 
           onPress={toggleTracking}
-        >
-          <Text style={styles.buttonText}>{isTracking ? 'CHECK OUT' : 'CHECK IN'}</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.hint}>
-          {isTracking 
-            ? 'Your location is being tracked in the background.' 
-            : 'Check in to start your shift and enable location tracking.'}
-        </Text>
+          color={isTracking ? '#4CAF50' : '#007AFF'}
+        />
+        <DashboardCard 
+          title="My Attendance" 
+          icon="calendar-check" 
+          onPress={() => navigation.navigate('MyAttendance')}
+        />
+        <DashboardCard 
+          title="My Regularization" 
+          icon="calendar-edit" 
+          onPress={() => Alert.alert('Coming Soon', 'Regularization is under development.')}
+        />
+        <DashboardCard 
+          title="View Process List" 
+          subtitle="(Request Status)"
+          icon="format-list-bulleted" 
+          onPress={() => Alert.alert('Coming Soon', 'Process list is under development.')}
+        />
+        <DashboardCard 
+          title="Holiday Calendar" 
+          icon="weather-sunny" 
+          onPress={() => navigation.navigate('HolidayCalendar')}
+        />
+        <DashboardCard 
+          title="My Timeoff" 
+          subtitle="(Leave Request)"
+          icon="calendar-plus" 
+          onPress={() => Alert.alert('Coming Soon', 'Leave requests are under development.')}
+        />
+        <DashboardCard 
+          title="Offboarding" 
+          icon="account-off" 
+          onPress={() => Alert.alert('Coming Soon', 'Offboarding is under development.')}
+        />
       </View>
     </SafeAreaView>
   );
@@ -127,10 +152,10 @@ export default function UserHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
   },
   header: {
-    padding: 24,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -138,82 +163,35 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   logo: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#333',
   },
   logout: {
     color: '#FF3B30',
     fontSize: 16,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+  welcomeBanner: {
+    backgroundColor: '#0055D4',
+    margin: 16,
     padding: 24,
-    alignItems: 'center',
+    borderRadius: 8,
   },
-  statusCard: {
-    width: '100%',
-    padding: 32,
-    borderRadius: 24,
-    marginBottom: 48,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+  welcomeText: {
+    color: '#fff',
+    fontSize: 18,
+    opacity: 0.9,
   },
-  online: {
-    backgroundColor: '#E0F2F1', // Light Teal
-    borderWidth: 2,
-    borderColor: '#009688',
-  },
-  offline: {
-    backgroundColor: '#FFEBEE', // Light Red
-    borderWidth: 2,
-    borderColor: '#EF5350',
-  },
-  statusTitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  statusText: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#333',
-  },
-  button: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 32,
-  },
-  checkIn: {
-    backgroundColor: '#007AFF', // Blue
-  },
-  checkOut: {
-    backgroundColor: '#FF3B30', // Red
-  },
-  buttonText: {
+  usernameText: {
     color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
+    marginTop: 4,
   },
-  hint: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 14,
-    maxWidth: 240,
-  }
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 10,
+    justifyContent: 'flex-start',
+  },
 });

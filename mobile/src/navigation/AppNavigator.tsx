@@ -1,18 +1,23 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
-import { View, ActivityIndicator } from 'react-native';
-
 
 // Manager Screens
 import ManagerDashboardScreen from '../screens/ManagerDashboardScreen';
 import AddEmployeeScreen from '../screens/AddEmployeeScreen';
 import EmployeeMapScreen from '../screens/EmployeeMapScreen';
 
-// User Screen
+// Common & User Screens
 import UserHomeScreen from '../screens/UserHomeScreen';
+import AllAgentsMapScreen from '../screens/AllAgentsMapScreen';
+import AgentsSectionScreen from '../screens/AgentsSectionScreen';
+import PunchPhotoScreen from '../screens/PunchPhotoScreen';
+import HolidayCalendarScreen from '../screens/HolidayCalendarScreen';
+import MyAttendanceScreen from '../screens/MyAttendanceScreen';
+import StaffAttendanceScreen from '../screens/StaffAttendanceScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +32,14 @@ export default function AppNavigator() {
     );
   }
 
+  const CommonScreens = (
+    <>
+      <Stack.Screen name="PunchPhoto" component={PunchPhotoScreen} options={{ headerShown: true, title: 'Capture Photo' }} />
+      <Stack.Screen name="HolidayCalendar" component={HolidayCalendarScreen} options={{ headerShown: true, title: 'Holiday Calendar' }} />
+      <Stack.Screen name="MyAttendance" component={MyAttendanceScreen} options={{ headerShown: true, title: 'My Attendance' }} />
+    </>
+  );
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -37,12 +50,18 @@ export default function AppNavigator() {
              <Stack.Screen name="ManagerDashboard" component={ManagerDashboardScreen} />
              <Stack.Screen name="AddEmployee" component={AddEmployeeScreen} options={{ headerShown: true, title: 'Add Employee' }} />
              <Stack.Screen name="EmployeeMap" component={EmployeeMapScreen} options={{ headerShown: true, title: 'Live Location' }} />
+             <Stack.Screen name="AllAgentsMap" component={AllAgentsMapScreen} options={{ headerShown: true, title: 'All Agents Map' }} />
+             <Stack.Screen name="AgentsSection" component={AgentsSectionScreen} options={{ headerShown: true, title: 'Agents Section' }} />
+             <Stack.Screen name="StaffAttendance" component={StaffAttendanceScreen} options={{ headerShown: true, title: 'Staff Attendance' }} />
+             {CommonScreens}
            </>
         ) : (
-          <Stack.Screen name="UserHome" component={UserHomeScreen} />
+          <>
+            <Stack.Screen name="UserHome" component={UserHomeScreen} />
+            {CommonScreens}
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-import { Text } from 'react-native';
