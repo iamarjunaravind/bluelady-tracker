@@ -23,6 +23,11 @@ import StoreListScreen from '../screens/StoreListScreen';
 import StoreOnboardingScreen from '../screens/StoreOnboardingScreen';
 import StoreVisitScreen from '../screens/StoreVisitScreen';
 import ManagerApprovalScreen from '../screens/ManagerApprovalScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import SendNotificationScreen from '../screens/SendNotificationScreen';
+import RegularizationScreen from '../screens/RegularizationScreen';
+import RouteAssignmentScreen from '../screens/RouteAssignmentScreen';
+import StoreDetailScreen from '../screens/StoreDetailScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -47,6 +52,11 @@ export default function AppNavigator() {
       <Stack.Screen name="StoreOnboarding" component={StoreOnboardingScreen} options={{ headerShown: true, title: 'Add New Store' }} />
       <Stack.Screen name="StoreVisit" component={StoreVisitScreen} options={{ headerShown: true, title: 'Store Visit' }} />
       <Stack.Screen name="ManagerApproval" component={ManagerApprovalScreen} options={{ headerShown: true, title: 'Approvals' }} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
+      <Stack.Screen name="SendNotification" component={SendNotificationScreen} options={{ headerShown: true, title: 'Send Notification' }} />
+      <Stack.Screen name="Regularization" component={RegularizationScreen} options={{ headerShown: true, title: 'My Regularization' }} />
+      <Stack.Screen name="RouteAssignment" component={RouteAssignmentScreen} options={{ headerShown: true, title: 'Assign Route' }} />
+      <Stack.Screen name="StoreDetail" component={StoreDetailScreen} options={{ headerShown: true, title: 'Store Detail', headerStyle: { backgroundColor: '#2E7D32' }, headerTintColor: '#fff' }} />
     </>
   );
 

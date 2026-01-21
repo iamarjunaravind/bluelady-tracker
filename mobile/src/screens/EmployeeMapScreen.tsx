@@ -27,11 +27,13 @@ export default function EmployeeMapScreen() {
 
   const fetchLocation = async () => {
     try {
+      // Updated URL to match backend change
       const response = await api.get(`/tracking/${employeeId}/latest/`);
       const { latitude, longitude, timestamp } = response.data;
       if (latitude && longitude) {
         setLocation({ latitude, longitude, timestamp });
-        
+        setErrorMsg(null); // Clear error on success
+
         // Animate map to new location
         mapRef.current?.animateToRegion({
           latitude,
@@ -40,10 +42,17 @@ export default function EmployeeMapScreen() {
           longitudeDelta: 0.01,
         }, 1000);
       }
-
-    } catch (error) {
-      console.log('Error fetching location:', error);
-      setErrorMsg("Failed to load location.");
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+          setErrorMsg("No location data found for this agent yet.");
+          // Do not log 404s to console to keep logs clean
+      } else if (error.response?.status === 403 || error.response?.status === 401) {
+           setErrorMsg("Permission denied. Ensure you are a manager.");
+           console.log('Permission error:', error.message);
+      } else {
+          setErrorMsg("Failed to load location. Retrying...");
+          console.log('Error fetching location:', error);
+      }
     }
   };
 

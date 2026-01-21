@@ -48,7 +48,13 @@
           "isAndroidBackgroundLocationEnabled": true
         }
       ],
-      "expo-task-manager"
+      "expo-task-manager",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow BlueLady Tracker to access your camera."
+        }
+      ]
     ]
   }
 }

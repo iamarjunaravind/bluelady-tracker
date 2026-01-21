@@ -26,18 +26,41 @@ export default function StoreOnboardingScreen() {
 
   const navigation = useNavigation();
   const route = useRoute<any>();
-  const { routeId } = route.params;
+  const { routeId, storeId } = route.params;
+  const isEditMode = !!storeId;
 
   useEffect(() => {
-    fetchLocation();
+    navigation.setOptions({ title: isEditMode ? 'Edit Store' : 'Add New Store' });
+    if (isEditMode) {
+        fetchStoreDetails();
+    } else {
+        fetchLocation();
+    }
   }, []);
+
+  const fetchStoreDetails = async () => {
+      try {
+          const response = await api.get(`/tracking/stores/${storeId}/`);
+          const data = response.data;
+          setName(data.name);
+          setManagerName(data.manager_name);
+          setPhoneNumber(data.phone_number);
+          setAddress(data.address);
+          setCapacity(data.capacity_size);
+          // Don't auto-set location from DB, allow user to capture new one only if they want
+          // But requirement says "update location details", so let's fetch current location to allow overwrite.
+          fetchLocation(); 
+      } catch (error) {
+          Alert.alert('Error', 'Failed to load store details');
+          navigation.goBack();
+      }
+  };
 
   const fetchLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required to add a store.');
-        navigation.goBack();
+        Alert.alert('Permission denied', 'Location permission is required.');
         return;
       }
 
@@ -46,7 +69,7 @@ export default function StoreOnboardingScreen() {
       setFetchingLocation(false);
     } catch (error) {
       console.log('Error getting location', error);
-      Alert.alert('Error', 'Failed to fetch location. Please try again.');
+      Alert.alert('Error', 'Failed to fetch location.');
       setFetchingLocation(false);
     }
   };
@@ -64,8 +87,7 @@ export default function StoreOnboardingScreen() {
 
     setLoading(true);
     try {
-      await api.post('/tracking/stores/', {
-        route: routeId,
+      const payload = {
         name,
         manager_name: managerName,
         phone_number: phoneNumber,
@@ -73,12 +95,21 @@ export default function StoreOnboardingScreen() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         capacity_size: capacity,
-      });
-      Alert.alert('Success', 'Store added successfully! Pending approval.');
+        route: routeId, // Ensure route is preserved or updated
+      };
+
+      if (isEditMode) {
+          await api.patch(`/tracking/stores/${storeId}/`, payload);
+          Alert.alert('Success', 'Store updated successfully!');
+      } else {
+          await api.post('/tracking/stores/', payload);
+          Alert.alert('Success', 'Store added successfully! Pending approval.');
+      }
       navigation.goBack();
-    } catch (error) {
-      console.error('Error adding store:', error);
-      Alert.alert('Error', 'Failed to add store.');
+    } catch (error: any) {
+      console.error('Error saving store:', error);
+      const msg = error.response?.data?.detail || JSON.stringify(error.response?.data) || error.message || 'Failed to save store';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -137,7 +168,10 @@ export default function StoreOnboardingScreen() {
 
         <View style={styles.locationInfo}>
             <Text style={styles.locationText}>
-                📍 Location Captured: {location?.coords.latitude.toFixed(5)}, {location?.coords.longitude.toFixed(5)}
+                📍 New Location to Save: {location?.coords.latitude.toFixed(5)}, {location?.coords.longitude.toFixed(5)}
+            </Text>
+            <Text style={{fontSize:10, color:'#666', textAlign:'center', marginTop:4}}>
+               (This will overwrite the previous location)
             </Text>
         </View>
 
@@ -145,7 +179,7 @@ export default function StoreOnboardingScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>Submit Store</Text>
+            <Text style={styles.submitButtonText}>{isEditMode ? 'Update Store' : 'Submit Store'}</Text>
           )}
         </TouchableOpacity>
       </View>

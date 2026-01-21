@@ -85,15 +85,22 @@ export default function ManagerDashboardScreen() {
           color="#FF9800"
         />
         <DashboardCard 
+          title="Assign Routes" 
+          icon="calendar-account" 
+          onPress={() => navigation.navigate('RouteAssignment')}
+          color="#795548"
+        />
+        <DashboardCard 
           title="Approvals" 
           icon="check-decagram" 
           onPress={() => navigation.navigate('ManagerApproval')}
           color="#E91E63"
         />
         <DashboardCard 
-          title="Offboarding" 
-          icon="account-off" 
-          onPress={() => Alert.alert('Coming Soon', 'Offboarding is under development.')}
+          title="Broadcast" 
+          icon="bullhorn" 
+          onPress={() => navigation.navigate('SendNotification')}
+          color="#9C27B0"
         />
       </View>
     </SafeAreaView>

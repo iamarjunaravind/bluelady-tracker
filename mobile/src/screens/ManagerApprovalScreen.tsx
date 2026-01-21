@@ -4,9 +4,10 @@ import api from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 
 export default function ManagerApprovalScreen() {
-  const [activeTab, setActiveTab] = useState<'stores' | 'visits'>('stores');
+  const [activeTab, setActiveTab] = useState<'stores' | 'visits' | 'regularization'>('stores');
   const [pendingStores, setPendingStores] = useState([]);
   const [pendingVisits, setPendingVisits] = useState([]);
+  const [pendingRegularization, setPendingRegularization] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
@@ -19,6 +20,7 @@ export default function ManagerApprovalScreen() {
       const response = await api.get('/tracking/manager/pending/');
       setPendingStores(response.data.pending_stores);
       setPendingVisits(response.data.pending_visits);
+      setPendingRegularization(response.data.pending_regularization);
     } catch (error) {
       console.log('Error fetching approvals:', error);
     } finally {
@@ -44,6 +46,16 @@ export default function ManagerApprovalScreen() {
     } catch (error) {
       Alert.alert('Error', 'Failed to approve visit.');
     }
+  };
+
+  const approveRegularization = async (id: number) => {
+      try {
+          await api.put(`/tracking/manager/approve/regularization/${id}/`, {});
+          Alert.alert('Success', 'Regularization approved.');
+          fetchPendingApprovals();
+      } catch (error) {
+          Alert.alert('Error', 'Failed to approve request.');
+      }
   };
 
   const renderStoreItem = ({ item }: { item: any }) => (
@@ -83,6 +95,32 @@ export default function ManagerApprovalScreen() {
     </View>
   );
 
+  const renderRegularizationItem = ({ item }: { item: any }) => (
+    <View style={styles.card}>
+        <View style={styles.header}>
+            <Text style={styles.title}>{item.username}</Text>
+            <Text style={styles.timestamp}>{item.date}</Text>
+        </View>
+        <Text style={styles.details}>Reason: {item.reason}</Text>
+
+        <TouchableOpacity style={styles.approveButton} onPress={() => approveRegularization(item.id)}>
+            <Text style={styles.approveButtonText}>Approve Request</Text>
+        </TouchableOpacity>
+    </View>
+  );
+
+  const getData = () => {
+      if (activeTab === 'stores') return pendingStores;
+      if (activeTab === 'visits') return pendingVisits;
+      return pendingRegularization;
+  }
+
+  const getRenderItem = () => {
+      if (activeTab === 'stores') return renderStoreItem;
+      if (activeTab === 'visits') return renderVisitItem;
+      return renderRegularizationItem;
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.tabs}>
@@ -90,13 +128,19 @@ export default function ManagerApprovalScreen() {
             style={[styles.tab, activeTab === 'stores' && styles.activeTab]} 
             onPress={() => setActiveTab('stores')}
         >
-            <Text style={[styles.tabText, activeTab === 'stores' && styles.activeTabText]}>Stores ({pendingStores.length})</Text>
+            <Text style={[styles.tabText, activeTab === 'stores' && styles.activeTabText]}>Stores ({pendingStores?.length || 0})</Text>
         </TouchableOpacity>
         <TouchableOpacity 
             style={[styles.tab, activeTab === 'visits' && styles.activeTab]} 
             onPress={() => setActiveTab('visits')}
         >
-            <Text style={[styles.tabText, activeTab === 'visits' && styles.activeTabText]}>Visits ({pendingVisits.length})</Text>
+            <Text style={[styles.tabText, activeTab === 'visits' && styles.activeTabText]}>Visits ({pendingVisits?.length || 0})</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+            style={[styles.tab, activeTab === 'regularization' && styles.activeTab]} 
+            onPress={() => setActiveTab('regularization')}
+        >
+            <Text style={[styles.tabText, activeTab === 'regularization' && styles.activeTabText]}>Reg Requests ({pendingRegularization?.length || 0})</Text>
         </TouchableOpacity>
       </View>
 
@@ -104,8 +148,8 @@ export default function ManagerApprovalScreen() {
         <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
-          data={activeTab === 'stores' ? pendingStores : pendingVisits}
-          renderItem={activeTab === 'stores' ? renderStoreItem : renderVisitItem}
+          data={getData()}
+          renderItem={getRenderItem()}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}
           ListEmptyComponent={<Text style={styles.emptyText}>No pending items.</Text>}

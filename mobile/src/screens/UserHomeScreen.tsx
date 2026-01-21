@@ -8,37 +8,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-const LOCATION_TASK_NAME = 'background-location-task';
+import LocationService from '../services/LocationService';
 
-// Define the background task
-TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
-  if (error) {
-    console.error('Location task error:', error);
-    return;
-  }
-  if (data) {
-    const { locations } = data as { locations: Location.LocationObject[] };
-    const location = locations[0];
-    if (location) {
-      try {
-          const token = await SecureStore.getItemAsync('userToken');
-          if (token) {
-            await api.post('/tracking/update/', {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            }, {
-              headers: { Authorization: `Token ${token}` }
-            });
-            console.log('Location sent:', location.coords);
-          } else {
-             console.log('No token found in background task');
-          }
-      } catch (err) {
-        console.error('Failed to send location', err);
-      }
-    }
-  }
-});
+// TaskManager logic is now handled inside LocationService (or you can keep the definition there if you move it)
+// For now, let's assume LocationService handles the foreground tracking mostly effectively for this use case
+// based on the "Live Track" requirement.
 
 import DashboardCard from '../components/DashboardCard';
 
@@ -48,25 +22,42 @@ export default function UserHomeScreen() {
   const navigation = useNavigation<any>();
   const [permissionStatus, setPermissionStatus] = useState<string>('undetermined');
 
+  const [todaysRoute, setTodaysRoute] = useState<any>(null);
+
   useEffect(() => {
     checkPermissions();
-    checkTaskStatus();
+    fetchTodaysRoute();
+    
+    // Auto-start tracking if permissions allow, or wait for user action?
+    // "Live Track" implies passive tracking or active. 
+    // Let's start it on load for now.
+    LocationService.startBackgroundLocation();
+    setIsTracking(true);
+
+    return () => {
+        // Optional: Stop on unmount? Or keep running?
+        // Usually we want to keep running if it's "Shift" based.
+        // For now, let's keep it running.
+    };
   }, []);
+
+  const fetchTodaysRoute = async () => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const response = await api.get(`/tracking/assignments/?date=${today}`);
+        if (response.data && response.data.length > 0) {
+            setTodaysRoute(response.data[0]);
+        }
+    } catch (error) {
+        console.log('Error fetching todays route:', error);
+    }
+  };
 
   const checkPermissions = async () => {
     const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
     let finalStatus = foregroundStatus;
-    if (foregroundStatus === 'granted') {
-      const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-      finalStatus = backgroundStatus;
-    }
     setPermissionStatus(finalStatus);
     return finalStatus;
-  };
-
-  const checkTaskStatus = async () => {
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME);
-    setIsTracking(isRegistered);
   };
 
   const toggleTracking = async () => {
@@ -86,7 +77,7 @@ export default function UserHomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      checkTaskStatus();
+      fetchTodaysRoute();
     }, [])
   );
 
@@ -100,8 +91,19 @@ export default function UserHomeScreen() {
       </View>
 
       <View style={styles.welcomeBanner}>
-        <Text style={styles.welcomeText}>Welcome,</Text>
-        <Text style={styles.usernameText}>{username || 'User'}</Text>
+        <View>
+          <Text style={styles.welcomeText}>Welcome,</Text>
+          <Text style={styles.usernameText}>{username || 'User'}</Text>
+        </View>
+        {todaysRoute && (
+          <TouchableOpacity 
+            style={styles.routeBadge}
+            onPress={() => navigation.navigate('StoreList', { routeId: todaysRoute.route, routeName: todaysRoute.route_name })}
+          >
+            <Text style={styles.routeLabel}>Today's Route:</Text>
+            <Text style={styles.routeName}>{todaysRoute.route_name}</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.grid}>
@@ -125,13 +127,14 @@ export default function UserHomeScreen() {
         <DashboardCard 
           title="My Regularization" 
           icon="calendar-edit" 
-          onPress={() => Alert.alert('Coming Soon', 'Regularization is under development.')}
+          onPress={() => navigation.navigate('Regularization')}
         />
         <DashboardCard 
-          title="View Process List" 
-          subtitle="(Request Status)"
-          icon="format-list-bulleted" 
-          onPress={() => Alert.alert('Coming Soon', 'Process list is under development.')}
+          title="Notifications" 
+          subtitle="(Process Updates)"
+          icon="bell" 
+          onPress={() => navigation.navigate('Notifications')}
+          color="#FF9800"
         />
         <DashboardCard 
           title="Holiday Calendar" 
@@ -179,19 +182,37 @@ const styles = StyleSheet.create({
   welcomeBanner: {
     backgroundColor: '#0055D4',
     margin: 16,
-    padding: 24,
-    borderRadius: 8,
+    padding: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   welcomeText: {
     color: '#fff',
-    fontSize: 18,
-    opacity: 0.9,
+    fontSize: 16,
+    opacity: 0.8,
   },
   usernameText: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 4,
+  },
+  routeBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'flex-end',
+  },
+  routeLabel: {
+    color: '#fff',
+    fontSize: 12,
+    opacity: 0.9,
+  },
+  routeName: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   grid: {
     flexDirection: 'row',

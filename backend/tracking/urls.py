@@ -7,27 +7,42 @@ from .views import (
     AttendanceListView,
     StaffAttendanceView,
     RouteListView,
+    RouteDetailView,
     StoreListView,
+    StoreDetailView,
     StoreVisitCreateView,
     ManagerStoreVisitListView,
     ApproveStoreView,
     ApproveStoreVisitView,
-    PendingApprovalsView
+    PendingApprovalsView,
+    NotificationListCreateView,
+    RegularizationListCreateView,
+    ManagerRegularizationListView,
+    ApproveRegularizationView,
+    RouteAssignmentListCreateView
 )
 
 urlpatterns = [
     path('update/', LocationUpdateView.as_view(), name='location-update'),
     path('latest/', LatestLocationView.as_view(), name='latest-location'),
+    path('<int:user_id>/latest/', LatestLocationView.as_view(), name='agent-latest-location'),
     path('all/', AllAgentsLatestLocationView.as_view(), name='all-agents-location'),
     path('punch/', AttendanceCreateView.as_view(), name='attendance-punch'),
     path('my-attendance/', AttendanceListView.as_view(), name='my-attendance'),
     path('staff-attendance/', StaffAttendanceView.as_view(), name='staff-attendance'),
     # New endpoints
     path('routes/', RouteListView.as_view(), name='route-list'),
+    path('routes/<int:pk>/', RouteDetailView.as_view(), name='route-detail'),
     path('stores/', StoreListView.as_view(), name='store-list'),
+    path('stores/<int:pk>/', StoreDetailView.as_view(), name='store-detail'),
     path('store-visit/', StoreVisitCreateView.as_view(), name='store-visit-create'),
     path('manager/visits/', ManagerStoreVisitListView.as_view(), name='manager-visit-list'),
     path('manager/approve/store/<int:pk>/', ApproveStoreView.as_view(), name='approve-store'),
     path('manager/approve/visit/<int:pk>/', ApproveStoreVisitView.as_view(), name='approve-visit'),
     path('manager/pending/', PendingApprovalsView.as_view(), name='pending-approvals'),
+    path('notifications/', NotificationListCreateView.as_view(), name='notifications'),
+    path('regularization/', RegularizationListCreateView.as_view(), name='regularization-list'),
+    path('manager/regularization/', ManagerRegularizationListView.as_view(), name='manager-regularization-list'),
+    path('manager/approve/regularization/<int:pk>/', ApproveRegularizationView.as_view(), name='approve-regularization'),
+    path('assignments/', RouteAssignmentListCreateView.as_view(), name='route-assignments'),
 ]

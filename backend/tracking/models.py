@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import django.utils.timezone
 
 class LocationUpdate(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='locations')
@@ -15,7 +16,7 @@ class Attendance(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     photo = models.ImageField(upload_to='attendance_photos/')
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(default=django.utils.timezone.now)
 
 
     def __str__(self):
@@ -61,3 +62,43 @@ class StoreVisit(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.store.name} - {self.timestamp}"
+
+class Notification(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_notifications')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class RegularizationRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='regularization_requests')
+    date = models.DateField()
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {self.status}"
+
+class RouteAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='route_assignments')
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='assignments')
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'date')
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {self.route.name}"
